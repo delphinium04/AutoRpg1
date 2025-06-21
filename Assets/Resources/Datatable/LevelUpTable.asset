@@ -1,0 +1,131 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: e9b1a36ab0733d8409bf7dd76121bbd0, type: 3}
+  m_Name: LevelUpTable
+  m_EditorClassIdentifier: 
+  list:
+  - ID: 1
+    Level: 1
+    RequiredExp: 10
+    TotalExp: 10
+  - ID: 2
+    Level: 2
+    RequiredExp: 60
+    TotalExp: 70
+  - ID: 3
+    Level: 3
+    RequiredExp: 110
+    TotalExp: 180
+  - ID: 4
+    Level: 4
+    RequiredExp: 160
+    TotalExp: 340
+  - ID: 5
+    Level: 5
+    RequiredExp: 210
+    TotalExp: 550
+  - ID: 6
+    Level: 6
+    RequiredExp: 260
+    TotalExp: 810
+  - ID: 7
+    Level: 7
+    RequiredExp: 310
+    TotalExp: 1120
+  - ID: 8
+    Level: 8
+    RequiredExp: 360
+    TotalExp: 1480
+  - ID: 9
+    Level: 9
+    RequiredExp: 410
+    TotalExp: 1890
+  - ID: 10
+    Level: 10
+    RequiredExp: 460
+    TotalExp: 2350
+  - ID: 11
+    Level: 11
+    RequiredExp: 510
+    TotalExp: 2860
+  - ID: 12
+    Level: 12
+    RequiredExp: 560
+    TotalExp: 3420
+  - ID: 13
+    Level: 13
+    RequiredExp: 610
+    TotalExp: 4030
+  - ID: 14
+    Level: 14
+    RequiredExp: 660
+    TotalExp: 4690
+  - ID: 15
+    Level: 15
+    RequiredExp: 710
+    TotalExp: 5400
+  - ID: 16
+    Level: 16
+    RequiredExp: 760
+    TotalExp: 6160
+  - ID: 17
+    Level: 17
+    RequiredExp: 810
+    TotalExp: 6970
+  - ID: 18
+    Level: 18
+    RequiredExp: 860
+    TotalExp: 7830
+  - ID: 19
+    Level: 19
+    RequiredExp: 910
+    TotalExp: 8740
+  - ID: 20
+    Level: 20
+    RequiredExp: 960
+    TotalExp: 9700
+  - ID: 21
+    Level: 21
+    RequiredExp: 1010
+    TotalExp: 10710
+  - ID: 22
+    Level: 22
+    RequiredExp: 1060
+    TotalExp: 11770
+  - ID: 23
+    Level: 23
+    RequiredExp: 1110
+    TotalExp: 12880
+  - ID: 24
+    Level: 24
+    RequiredExp: 1160
+    TotalExp: 14040
+  - ID: 25
+    Level: 25
+    RequiredExp: 1210
+    TotalExp: 15250
+  - ID: 26
+    Level: 26
+    RequiredExp: 1260
+    TotalExp: 16510
+  - ID: 27
+    Level: 27
+    RequiredExp: 1310
+    TotalExp: 17820
+  - ID: 28
+    Level: 28
+    RequiredExp: 1360
+    TotalExp: 19180
+  - ID: 29
+    Level: 29
+    RequiredExp: 1410
+    TotalExp: 20590
