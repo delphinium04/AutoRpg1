@@ -7,36 +7,62 @@ using System.Text;
 using UnityEditor;
 using UnityEngine;
 
-namespace Editor.DataTable
+namespace Editor.Datatable
 {
-   
-
     public static class DatatableCsvManager
     {
+        private const string CACHE_PREF_KEY = "DatatableCsvManager_Cache";
         private static Queue<ParsedCsv> _parsedCsvCache = new Queue<ParsedCsv>();
 
+        [Serializable]
+        private class ParsedCsvCache
+        {
+            public List<ParsedCsv> items = new List<ParsedCsv>();
+        }
+
+        [Serializable]
         private class ParsedCsv
         {
+            // 기존 필드들을 그대로 유지하되, Serializable 속성 추가
             public string SheetName;
-            public string[] CommentNames; // korean etc
+            public string[] CommentNames;
             public string[] VarNames;
             public string[] VarTypes;
-            public string[] Data; // csv after line 2
-            
-            // for SO
+            public string[] Data;
             public string DataClassName;
             public string TableClassName;
         }
-        
+
+        private static void SaveCache()
+        {
+            var cache = new ParsedCsvCache
+            {
+                items = _parsedCsvCache.ToList()
+            };
+            string json = JsonUtility.ToJson(cache);
+            EditorPrefs.SetString(CACHE_PREF_KEY, json);
+        }
+
+        private static void LoadCache()
+        {
+            string json = EditorPrefs.GetString(CACHE_PREF_KEY, "");
+            if (!string.IsNullOrEmpty(json))
+            {
+                var cache = JsonUtility.FromJson<ParsedCsvCache>(json);
+                _parsedCsvCache = new Queue<ParsedCsv>(cache.items);
+            }
+        }
+
         private const string BaseScriptPath = "Assets/Scripts/Datatable/";
-        private const string BaseDataPath = "Assets/Resources/Datatable/";
+        private const string BaseScriptableObjectPath = "Assets/Resources/Datatable/";
         private const string DatatableNamespace = "Datatable";
 
         public static void DeleteAllGeneratedFiles()
         {
             _parsedCsvCache.Clear();
+            EditorPrefs.DeleteKey(CACHE_PREF_KEY); // 캐시 삭제
             Delete(BaseScriptPath);
-            Delete(BaseDataPath);
+            Delete(BaseScriptableObjectPath);
             return;
 
             void Delete(string path)
@@ -112,6 +138,7 @@ namespace Editor.DataTable
                 TableClassName = $"{DatatableNamespace}.{sheetName}Table"
             };
             _parsedCsvCache.Enqueue(parsedCsv);
+            SaveCache(); // 캐시 저장
 
             // 코드 생성
             GenerateDataClass(parsedCsv);
@@ -124,6 +151,8 @@ namespace Editor.DataTable
 
         public static void CreateScriptableObject()
         {
+            LoadCache(); // 캐시 복원
+        
             if (_parsedCsvCache.Count == 0)
             {
                 Debug.LogWarning("No data to generate");
@@ -137,6 +166,7 @@ namespace Editor.DataTable
             }
 
             Debug.Log("All data converted to ScriptableObject");
+            EditorPrefs.DeleteKey(CACHE_PREF_KEY); // 작업 완료 후 캐시 삭제
             _parsedCsvCache.Clear();
         }
 
@@ -155,10 +185,24 @@ namespace Editor.DataTable
                     return;
                 }
 
-                // SO 인스턴스 생성
-                var table = ScriptableObject.CreateInstance(tableType);
+                // Table의 List 필드 세팅
                 var listType = typeof(List<>).MakeGenericType(dataType);
                 var list = (IList)Activator.CreateInstance(listType);
+                ScriptableObject table;
+
+                // 이미 파일이 있는지 확인
+                bool isAlreadyAssetExist = false;
+                var dataPath = Path.Combine(BaseScriptableObjectPath, $"{parsed.TableClassName}.asset");
+                if (File.Exists(dataPath))
+                {
+                    isAlreadyAssetExist = true;
+                    table = AssetDatabase.LoadAssetAtPath<ScriptableObject>(dataPath);
+                    Debug.Log($"File already exists at {dataPath}");
+                }
+                else
+                {
+                    table = ScriptableObject.CreateInstance(tableType);
+                }
 
                 // 데이터 행 처리
                 foreach (var dataLine in parsed.Data)
@@ -176,7 +220,7 @@ namespace Editor.DataTable
                 listField.SetValue(table, list);
 
                 // 파일로 저장
-                SaveScriptableObject(table, parsed.SheetName);
+                SaveScriptableObject(table, parsed.SheetName, isAlreadyAssetExist);
             }
             catch (Exception e)
             {
@@ -185,18 +229,20 @@ namespace Editor.DataTable
             }
         }
 
-        private static void SaveScriptableObject(ScriptableObject asset, string sheetName)
+        private static void SaveScriptableObject(ScriptableObject asset, string sheetName, bool isAlreadyExist = false)
         {
-            if (!Directory.Exists(BaseDataPath))
-                Directory.CreateDirectory(BaseDataPath);
+            if (!isAlreadyExist)
+            {
+                if (!Directory.Exists(BaseScriptableObjectPath))
+                    Directory.CreateDirectory(BaseScriptableObjectPath);
+                string assetPath = Path.Combine(BaseScriptableObjectPath, $"{sheetName}Table.asset");
+                AssetDatabase.CreateAsset(asset, assetPath);
+            }
 
-            string assetPath = Path.Combine(BaseDataPath, $"{sheetName}Table.asset");
-
-            AssetDatabase.CreateAsset(asset, assetPath);
             AssetDatabase.SaveAssetIfDirty(asset);
             RestartAssetDatabase();
 
-            Debug.Log($"Created ScriptableObject at {assetPath}");
+            Debug.Log($"Created {sheetName}Table.asset");
         }
 
         private static void RestartAssetDatabase()
