@@ -9,7 +9,7 @@ using UnityEngine;
 
 // EditorCoroutineUtility 사용
 
-namespace Editor.DataTable
+namespace Editor.Datatable
 {
     [System.Serializable]
     public class Sheet
@@ -26,6 +26,14 @@ namespace Editor.DataTable
 
     public class GoogleSheetDownloader : EditorWindow
     {
+        private enum State
+        {
+            Idle,
+            SheetDownloaded,
+            ClassGenerated,
+            Done
+        }
+
         private string _urlSpreadSheet =
             "https://docs.google.com/spreadsheets/d/1VlvBPiuNu68FzotLLMY4joOnXOeZ56C_3fHiTAVCKLQ";
 
@@ -34,24 +42,18 @@ namespace Editor.DataTable
 
 
         private List<Sheet> _sheets = new List<Sheet>();
-        
-        private bool _isClassGenerated = false;
-        private bool _done = false;
+
+        private static State _state;
 
         [MenuItem("Tools/Google Sheet Downloader")]
         public static void ShowWindow()
         {
+            _state = State.Idle;
             GetWindow<GoogleSheetDownloader>("Google Sheet Downloader");
         }
 
         private void OnGUI()
         {
-            if (_done)
-            {
-                GUILayout.Label("Done");
-                return;
-            }
-            
             if (GUILayout.Button("Cleanup"))
             {
                 bool confirmed = EditorUtility.DisplayDialog("Cleanup", "Do it?", "Confirm", "Cancel");
@@ -64,6 +66,27 @@ namespace Editor.DataTable
 
             GUILayout.Space(20);
 
+            switch (_state)
+            {
+                case State.Idle:
+                    ShowSheetDownloadButton();
+                    break;
+                case State.SheetDownloaded:
+                    ShowClassGenerateButton();
+                    break;
+                case State.ClassGenerated:
+                    ShowDataSaveButton();
+                    break;
+                case State.Done:
+                    GUILayout.Label("Done");
+                    break;
+                default:
+                    throw new ArgumentOutOfRangeException();
+            }
+        }
+
+        private void ShowSheetDownloadButton()
+        {
             GUILayout.Label("Google Spreadsheet Url", EditorStyles.boldLabel);
             _urlSpreadSheet = EditorGUILayout.TextField("Sheet URL", _urlSpreadSheet);
             GUILayout.Label("Google Apps Script URL", EditorStyles.boldLabel);
@@ -98,10 +121,21 @@ namespace Editor.DataTable
                             Debug.LogException(e);
                             Debug.LogWarning("Need latest google apps scripts url");
                         }
+                        finally
+                        {
+                            _state = State.SheetDownloaded;
+                        }
                     }));
             }
+        }
 
-            if (_sheets.Count == 0) return;
+        private void ShowClassGenerateButton()
+        {
+            if (_sheets.Count == 0)
+            {
+                Debug.LogWarning("No sheet to generate");
+                return;
+            }
 
             // Show fetched sheets 
             GUILayout.Space(20);
@@ -121,18 +155,19 @@ namespace Editor.DataTable
                         csv => DatatableCsvManager.Parse(sheet.sheetName, csv)));
                 }
 
-                _isClassGenerated = true;
-            }
-                
-            // Show SO Generating Button
-            if (_isClassGenerated)
-            {
-                if (GUILayout.Button("Save Data"))
-                {
-                    DatatableCsvManager.CreateScriptableObject();
-                }
+                _state = State.ClassGenerated;
             }
         }
+
+        private void ShowDataSaveButton()
+        {
+            if (GUILayout.Button("Save Data"))
+            {
+                DatatableCsvManager.CreateScriptableObject();
+                _state = State.Done;
+            }
+        }
+
 
         #region GoogleSheets
 
