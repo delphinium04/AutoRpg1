@@ -1,5 +1,3 @@
-// https://wallyyoucandoit.tistory.com/32 참고
-
 using System;
 using System.Collections;
 using System.Collections.Generic;
@@ -26,6 +24,8 @@ namespace Editor.Datatable
 
     public class GoogleSheetDownloader : EditorWindow
     {
+        private const string STATE_PREF_KEY = "GoogleSheetDownloader_State";
+    
         private enum State
         {
             Idle,
@@ -33,6 +33,8 @@ namespace Editor.Datatable
             ClassGenerated,
             Done
         }
+
+        private static State _state;
 
         private string _urlSpreadSheet =
             "https://docs.google.com/spreadsheets/d/1VlvBPiuNu68FzotLLMY4joOnXOeZ56C_3fHiTAVCKLQ";
@@ -43,13 +45,24 @@ namespace Editor.Datatable
 
         private List<Sheet> _sheets = new List<Sheet>();
 
-        private static State _state;
 
         [MenuItem("Tools/Google Sheet Downloader")]
         public static void ShowWindow()
         {
             _state = State.Idle;
             GetWindow<GoogleSheetDownloader>("Google Sheet Downloader");
+        }
+    
+        private void OnEnable()
+        {
+            // 저장된 상태 복원
+            _state = (State)EditorPrefs.GetInt(STATE_PREF_KEY, 0);
+        }
+    
+        private void SaveState(State newState)
+        {
+            _state = newState;
+            EditorPrefs.SetInt(STATE_PREF_KEY, (int)_state);
         }
 
         private void OnGUI()
@@ -59,6 +72,8 @@ namespace Editor.Datatable
                 bool confirmed = EditorUtility.DisplayDialog("Cleanup", "Do it?", "Confirm", "Cancel");
                 if (confirmed)
                 {
+                    _state = State.Idle;
+                    SaveState(_state);
                     DatatableCsvManager.DeleteAllGeneratedFiles();
                     AssetDatabase.Refresh();
                 }
@@ -123,7 +138,7 @@ namespace Editor.Datatable
                         }
                         finally
                         {
-                            _state = State.SheetDownloaded;
+                            SaveState(State.SheetDownloaded);
                         }
                     }));
             }
@@ -155,7 +170,7 @@ namespace Editor.Datatable
                         csv => DatatableCsvManager.Parse(sheet.sheetName, csv)));
                 }
 
-                _state = State.ClassGenerated;
+                SaveState(State.ClassGenerated);
             }
         }
 
@@ -164,7 +179,7 @@ namespace Editor.Datatable
             if (GUILayout.Button("Save Data"))
             {
                 DatatableCsvManager.CreateScriptableObject();
-                _state = State.Done;
+                SaveState(State.Done);
             }
         }
 
