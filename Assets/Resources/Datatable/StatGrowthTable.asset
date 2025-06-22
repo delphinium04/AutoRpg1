@@ -13,31 +13,31 @@ MonoBehaviour:
   m_Name: StatGrowthTable
   m_EditorClassIdentifier: 
   list:
-  - StatID: 1
-    StatType: ATK
-    Base: 10
-    Increase: 0
-    BaseCost: 100
-    CostRate: 1.15
-    MaxLevel: 20000
-  - StatID: 2
-    StatType: DEF
-    Base: 5
-    Increase: 0
-    BaseCost: 80
-    CostRate: 1.15
-    MaxLevel: 20000
-  - StatID: 3
-    StatType: CriRate
-    Base: 3
-    Increase: 0
-    BaseCost: 300
-    CostRate: 1.15
-    MaxLevel: 20000
-  - StatID: 4
-    StatType: CriDmg
-    Base: 150
-    Increase: 0
-    BaseCost: 250
-    CostRate: 1.15
-    MaxLevel: 20000
+  - statId: 1
+    statType: ATK
+    defaultValue: 10
+    statIncreasement: 2
+    defaultCost: 100
+    costIncreasementRate: 1.15
+    maxLevel: 20000
+  - statId: 2
+    statType: DEF
+    defaultValue: 5
+    statIncreasement: 2
+    defaultCost: 80
+    costIncreasementRate: 1.15
+    maxLevel: 20000
+  - statId: 3
+    statType: CriRate
+    defaultValue: 3
+    statIncreasement: 5
+    defaultCost: 300
+    costIncreasementRate: 1.15
+    maxLevel: 20000
+  - statId: 4
+    statType: CriDmg
+    defaultValue: 150
+    statIncreasement: 5
+    defaultCost: 250
+    costIncreasementRate: 1.15
+    maxLevel: 20000

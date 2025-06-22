@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using UnityEngine;
 
-namespace DataTable
+namespace Datatable
 {
 	public static class LevelUpDataProvider
 	{
@@ -30,7 +30,7 @@ namespace DataTable
 				_LevelUpData = new Dictionary<int, LevelUpData>();
 				foreach (var data in Table.list)
 				{
-					_LevelUpData.Add(data.ID, data);
+					_LevelUpData.Add(data.levelId, data);
 				}
 			}
 			

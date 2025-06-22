@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using UnityEngine;
 
-namespace DataTable
+namespace Datatable
 {
 	public static class StatGrowthDataProvider
 	{
@@ -30,7 +30,7 @@ namespace DataTable
 				_StatGrowthData = new Dictionary<int, StatGrowthData>();
 				foreach (var data in Table.list)
 				{
-					_StatGrowthData.Add(data.StatID, data);
+					_StatGrowthData.Add(data.statId, data);
 				}
 			}
 			

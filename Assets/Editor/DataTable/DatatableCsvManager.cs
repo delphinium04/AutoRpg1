@@ -9,8 +9,12 @@ using UnityEngine;
 
 namespace Editor.DataTable
 {
+   
+
     public static class DatatableCsvManager
     {
+        private static Queue<ParsedCsv> _parsedCsvCache = new Queue<ParsedCsv>();
+
         private class ParsedCsv
         {
             public string SheetName;
@@ -18,14 +22,19 @@ namespace Editor.DataTable
             public string[] VarNames;
             public string[] VarTypes;
             public string[] Data; // csv after line 2
+            
+            // for SO
+            public string DataClassName;
+            public string TableClassName;
         }
-
+        
         private const string BaseScriptPath = "Assets/Scripts/Datatable/";
         private const string BaseDataPath = "Assets/Resources/Datatable/";
-        private const string DatatableNamespace = "DataTable";
+        private const string DatatableNamespace = "Datatable";
 
         public static void DeleteAllGeneratedFiles()
         {
+            _parsedCsvCache.Clear();
             Delete(BaseScriptPath);
             Delete(BaseDataPath);
             return;
@@ -87,73 +96,62 @@ namespace Editor.DataTable
 
             Debug.Log($"Read {sheetName} from A:1 to {GetGoogleSheetColumnLetter(validColumnCount)}:{validRowCount}");
 
-
             // 데이터 필터링 및 저장 (# 무시)
             bool[] ignoreColumns = new bool[validColumnCount];
             for (int i = 0; i < validColumnCount; i++)
                 ignoreColumns[i] = columns[i].StartsWith("#");
 
-            ParsedCsv parsedCsv = new ParsedCsv();
-            parsedCsv.SheetName = sheetName;
-            parsedCsv.CommentNames = FilterColumns(lines[0], ignoreColumns).Split(',');
-            parsedCsv.VarNames = FilterColumns(lines[1], ignoreColumns).Split(',');
-            parsedCsv.VarTypes = FilterColumns(lines[2], ignoreColumns).Split(',');
-            parsedCsv.Data = FilterColumnsMultiline(csv, ignoreColumns)[3..];
-
+            ParsedCsv parsedCsv = new ParsedCsv
+            {
+                SheetName = sheetName,
+                CommentNames = FilterColumns(lines[0], ignoreColumns).Split(','),
+                VarNames = FilterColumns(lines[1], ignoreColumns).Split(','),
+                VarTypes = FilterColumns(lines[2], ignoreColumns).Split(','),
+                Data = FilterColumnsMultiline(csv, ignoreColumns)[3..],
+                DataClassName = $"{DatatableNamespace}.{sheetName}Data",
+                TableClassName = $"{DatatableNamespace}.{sheetName}Table"
+            };
+            _parsedCsvCache.Enqueue(parsedCsv);
 
             // 코드 생성
             GenerateDataClass(parsedCsv);
             GenerateTableClass(parsedCsv);
             GenerateProviderClass(parsedCsv);
-            AssetDatabase.Refresh();
-            Debug.Log($"Generated Script of {sheetName} Successfully, try to generate scriptable object...");
 
-            // 데이터 생성
-            CreateScriptableObject(parsedCsv);
-            Debug.Log($"{sheetName}: Done");
+            RestartAssetDatabase();
+            Debug.Log($"Generated Script of {sheetName} Successfully");
         }
 
-        private static void GenerateDataClass(ParsedCsv parsedCsv)
+        public static void CreateScriptableObject()
         {
-            // add variable lines
-            string variables = "";
-            for (int i = 0; i < parsedCsv.CommentNames.Length; i++)
+            if (_parsedCsvCache.Count == 0)
             {
-                variables +=
-                    $"\t\tpublic {parsedCsv.VarTypes[i]} {parsedCsv.VarNames[i]}; // {parsedCsv.CommentNames[i]}\n";
+                Debug.LogWarning("No data to generate");
+                return;
             }
 
-            string script = string.Format(DatatableClassFormat.Data, DatatableNamespace, parsedCsv.SheetName,
-                variables);
-            File.WriteAllText(BaseScriptPath + $"{parsedCsv.SheetName}Data.cs", script, Encoding.UTF8);
+            while (_parsedCsvCache.Count > 0)
+            {
+                ParsedCsv parsed = _parsedCsvCache.Dequeue();
+                TryConvertDataToScriptableObject(parsed);
+            }
+
+            Debug.Log("All data converted to ScriptableObject");
+            _parsedCsvCache.Clear();
         }
 
-        private static void GenerateTableClass(ParsedCsv parsedCsv)
-        {
-            string script = string.Format(DatatableClassFormat.Table, DatatableNamespace, parsedCsv.SheetName);
-            File.WriteAllText(BaseScriptPath + $"{parsedCsv.SheetName}Table.cs", script, Encoding.UTF8);
-        }
-
-        private static void GenerateProviderClass(ParsedCsv csv)
-        {
-            string idVariableName = csv.VarNames[0];
-            string script = string.Format(DatatableClassFormat.Provider, DatatableNamespace, csv.SheetName,
-                csv.VarNames[0]);
-            File.WriteAllText(BaseScriptPath + $"{csv.SheetName}DataProvider.cs", script, Encoding.UTF8);
-        }
-
-        private static void CreateScriptableObject(ParsedCsv csv)
+        private static void TryConvertDataToScriptableObject(ParsedCsv parsed)
         {
             try
             {
                 // ScriptableObject 생성
-                var tableType = GetTypeFromName($"{DatatableNamespace}.{csv.SheetName}Table");
-                var dataType = GetTypeFromName($"{DatatableNamespace}.{csv.SheetName}Data");
+                var dataType = GetTypeFromName(parsed.DataClassName);
+                var tableType = GetTypeFromName(parsed.TableClassName);
 
                 if (tableType == null || dataType == null)
                 {
                     Debug.LogError(
-                        $"Types not found for {csv.SheetName}. Make sure to compile the generated scripts first.");
+                        $"Types not found for {parsed.DataClassName}. Make sure to compile the generated scripts first.");
                     return;
                 }
 
@@ -163,10 +161,10 @@ namespace Editor.DataTable
                 var list = (IList)Activator.CreateInstance(listType);
 
                 // 데이터 행 처리
-                foreach (var dataLine in csv.Data)
+                foreach (var dataLine in parsed.Data)
                 {
                     string[] data = dataLine.Split(',');
-                    var dataInstance = CreateDataInstance(dataType, csv, data);
+                    var dataInstance = CreateDataInstance(dataType, parsed, data);
                     if (dataInstance != null)
                     {
                         list.Add(dataInstance);
@@ -178,12 +176,33 @@ namespace Editor.DataTable
                 listField.SetValue(table, list);
 
                 // 파일로 저장
-                SaveScriptableObject(table, csv.SheetName);
+                SaveScriptableObject(table, parsed.SheetName);
             }
             catch (Exception e)
             {
-                Debug.LogError($"Error creating ScriptableObject for {csv.SheetName}: {e.Message}\n{e.StackTrace}");
+                Debug.LogError(
+                    $"Error creating ScriptableObject for {parsed.SheetName}: {e.Message}\n{e.StackTrace}");
             }
+        }
+
+        private static void SaveScriptableObject(ScriptableObject asset, string sheetName)
+        {
+            if (!Directory.Exists(BaseDataPath))
+                Directory.CreateDirectory(BaseDataPath);
+
+            string assetPath = Path.Combine(BaseDataPath, $"{sheetName}Table.asset");
+
+            AssetDatabase.CreateAsset(asset, assetPath);
+            AssetDatabase.SaveAssetIfDirty(asset);
+            RestartAssetDatabase();
+
+            Debug.Log($"Created ScriptableObject at {assetPath}");
+        }
+
+        private static void RestartAssetDatabase()
+        {
+            AssetDatabase.SaveAssets();
+            AssetDatabase.Refresh();
         }
 
         private static Type GetTypeFromName(string fullName)
@@ -222,6 +241,35 @@ namespace Editor.DataTable
             return instance;
         }
 
+        private static void GenerateDataClass(ParsedCsv parsedCsv)
+        {
+            // add variable lines
+            string variables = "";
+            for (int i = 0; i < parsedCsv.CommentNames.Length; i++)
+            {
+                variables +=
+                    $"\t\tpublic {parsedCsv.VarTypes[i]} {parsedCsv.VarNames[i]}; // {parsedCsv.CommentNames[i]}\n";
+            }
+
+            string script = string.Format(DatatableClassFormat.Data, DatatableNamespace, parsedCsv.SheetName,
+                variables);
+            File.WriteAllText(BaseScriptPath + $"{parsedCsv.SheetName}Data.cs", script, Encoding.UTF8);
+        }
+
+        private static void GenerateTableClass(ParsedCsv parsedCsv)
+        {
+            string script = string.Format(DatatableClassFormat.Table, DatatableNamespace, parsedCsv.SheetName);
+            File.WriteAllText(BaseScriptPath + $"{parsedCsv.SheetName}Table.cs", script, Encoding.UTF8);
+        }
+
+        private static void GenerateProviderClass(ParsedCsv csv)
+        {
+            string idVariableName = csv.VarNames[0];
+            string script = string.Format(DatatableClassFormat.Provider, DatatableNamespace, csv.SheetName,
+                csv.VarNames[0]);
+            File.WriteAllText(BaseScriptPath + $"{csv.SheetName}DataProvider.cs", script, Encoding.UTF8);
+        }
+
         private static object ConvertValue(string value, string type)
         {
             if (string.IsNullOrEmpty(value))
@@ -258,19 +306,6 @@ namespace Editor.DataTable
                 _ => null
             };
             // Enum에 따른 추가 작업 필요
-        }
-
-        private static void SaveScriptableObject(ScriptableObject asset, string sheetName)
-        {
-            if (!Directory.Exists(BaseDataPath))
-                Directory.CreateDirectory(BaseDataPath);
-
-            string assetPath = Path.Combine(BaseDataPath, $"{sheetName}Table.asset");
-            AssetDatabase.CreateAsset(asset, assetPath);
-            AssetDatabase.SaveAssets();
-            AssetDatabase.Refresh();
-
-            Debug.Log($"Created ScriptableObject at {assetPath}");
         }
 
         private static string GetGoogleSheetColumnLetter(int columnNumber)

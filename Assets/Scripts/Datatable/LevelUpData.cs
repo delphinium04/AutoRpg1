@@ -1,13 +1,13 @@
 ﻿
-namespace DataTable
+namespace Datatable
 {
 	[System.Serializable]
 	public class LevelUpData
 	{
-		public int ID; // 아이디
-		public int Level; // 레벨
-		public int RequiredExp; // 필요 경험치
-		public int TotalExp; // 누적 경험치
+		public int levelId; // 아이디
+		public int level; // 레벨
+		public int requiredExp; // 필요 경험치
+		public int totalExp; // 누적 경험치
 
 	}
 }

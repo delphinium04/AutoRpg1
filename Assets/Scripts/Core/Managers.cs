@@ -1,29 +1,39 @@
 using UnityEngine;
-using UnityEngine.InputSystem;
 
-public class Managers : MonoBehaviour
+namespace Core
 {
-    private static Managers _instance;
-
-    public static Managers Instance
+    public class Managers : MonoBehaviour
     {
-        get
+        private static Managers _instance;
+
+        public static Managers Instance
         {
-            if (_instance == null)
+            get
             {
-                _instance = FindFirstObjectByType<Managers>();
                 if (_instance == null)
-                    Init();
+                {
+                    _instance = FindFirstObjectByType<Managers>();
+                    if (_instance == null)
+                        Init();
+                }
+
+                return _instance;
             }
-
-            return _instance;
         }
-    }
 
-    private static void Init()
-    {
-        var go = new GameObject("@Managers");
-        DontDestroyOnLoad(go);
-        _instance = go.AddComponent<Managers>();
+        #region Managers
+
+        public static ResourceManager Resource { get; private set; }
+
+        #endregion
+        
+        private static void Init()
+        {
+            var go = new GameObject("@Managers");
+            DontDestroyOnLoad(go);
+            _instance = go.AddComponent<Managers>();
+
+            Resource = new ResourceManager();
+        }
     }
 }

@@ -13,119 +13,119 @@ MonoBehaviour:
   m_Name: LevelUpTable
   m_EditorClassIdentifier: 
   list:
-  - ID: 1
-    Level: 1
-    RequiredExp: 10
-    TotalExp: 10
-  - ID: 2
-    Level: 2
-    RequiredExp: 60
-    TotalExp: 70
-  - ID: 3
-    Level: 3
-    RequiredExp: 110
-    TotalExp: 180
-  - ID: 4
-    Level: 4
-    RequiredExp: 160
-    TotalExp: 340
-  - ID: 5
-    Level: 5
-    RequiredExp: 210
-    TotalExp: 550
-  - ID: 6
-    Level: 6
-    RequiredExp: 260
-    TotalExp: 810
-  - ID: 7
-    Level: 7
-    RequiredExp: 310
-    TotalExp: 1120
-  - ID: 8
-    Level: 8
-    RequiredExp: 360
-    TotalExp: 1480
-  - ID: 9
-    Level: 9
-    RequiredExp: 410
-    TotalExp: 1890
-  - ID: 10
-    Level: 10
-    RequiredExp: 460
-    TotalExp: 2350
-  - ID: 11
-    Level: 11
-    RequiredExp: 510
-    TotalExp: 2860
-  - ID: 12
-    Level: 12
-    RequiredExp: 560
-    TotalExp: 3420
-  - ID: 13
-    Level: 13
-    RequiredExp: 610
-    TotalExp: 4030
-  - ID: 14
-    Level: 14
-    RequiredExp: 660
-    TotalExp: 4690
-  - ID: 15
-    Level: 15
-    RequiredExp: 710
-    TotalExp: 5400
-  - ID: 16
-    Level: 16
-    RequiredExp: 760
-    TotalExp: 6160
-  - ID: 17
-    Level: 17
-    RequiredExp: 810
-    TotalExp: 6970
-  - ID: 18
-    Level: 18
-    RequiredExp: 860
-    TotalExp: 7830
-  - ID: 19
-    Level: 19
-    RequiredExp: 910
-    TotalExp: 8740
-  - ID: 20
-    Level: 20
-    RequiredExp: 960
-    TotalExp: 9700
-  - ID: 21
-    Level: 21
-    RequiredExp: 1010
-    TotalExp: 10710
-  - ID: 22
-    Level: 22
-    RequiredExp: 1060
-    TotalExp: 11770
-  - ID: 23
-    Level: 23
-    RequiredExp: 1110
-    TotalExp: 12880
-  - ID: 24
-    Level: 24
-    RequiredExp: 1160
-    TotalExp: 14040
-  - ID: 25
-    Level: 25
-    RequiredExp: 1210
-    TotalExp: 15250
-  - ID: 26
-    Level: 26
-    RequiredExp: 1260
-    TotalExp: 16510
-  - ID: 27
-    Level: 27
-    RequiredExp: 1310
-    TotalExp: 17820
-  - ID: 28
-    Level: 28
-    RequiredExp: 1360
-    TotalExp: 19180
-  - ID: 29
-    Level: 29
-    RequiredExp: 1410
-    TotalExp: 20590
+  - levelId: 1
+    level: 1
+    requiredExp: 10
+    totalExp: 10
+  - levelId: 2
+    level: 2
+    requiredExp: 60
+    totalExp: 70
+  - levelId: 3
+    level: 3
+    requiredExp: 110
+    totalExp: 180
+  - levelId: 4
+    level: 4
+    requiredExp: 160
+    totalExp: 340
+  - levelId: 5
+    level: 5
+    requiredExp: 210
+    totalExp: 550
+  - levelId: 6
+    level: 6
+    requiredExp: 260
+    totalExp: 810
+  - levelId: 7
+    level: 7
+    requiredExp: 310
+    totalExp: 1120
+  - levelId: 8
+    level: 8
+    requiredExp: 360
+    totalExp: 1480
+  - levelId: 9
+    level: 9
+    requiredExp: 410
+    totalExp: 1890
+  - levelId: 10
+    level: 10
+    requiredExp: 460
+    totalExp: 2350
+  - levelId: 11
+    level: 11
+    requiredExp: 510
+    totalExp: 2860
+  - levelId: 12
+    level: 12
+    requiredExp: 560
+    totalExp: 3420
+  - levelId: 13
+    level: 13
+    requiredExp: 610
+    totalExp: 4030
+  - levelId: 14
+    level: 14
+    requiredExp: 660
+    totalExp: 4690
+  - levelId: 15
+    level: 15
+    requiredExp: 710
+    totalExp: 5400
+  - levelId: 16
+    level: 16
+    requiredExp: 760
+    totalExp: 6160
+  - levelId: 17
+    level: 17
+    requiredExp: 810
+    totalExp: 6970
+  - levelId: 18
+    level: 18
+    requiredExp: 860
+    totalExp: 7830
+  - levelId: 19
+    level: 19
+    requiredExp: 910
+    totalExp: 8740
+  - levelId: 20
+    level: 20
+    requiredExp: 960
+    totalExp: 9700
+  - levelId: 21
+    level: 21
+    requiredExp: 1010
+    totalExp: 10710
+  - levelId: 22
+    level: 22
+    requiredExp: 1060
+    totalExp: 11770
+  - levelId: 23
+    level: 23
+    requiredExp: 1110
+    totalExp: 12880
+  - levelId: 24
+    level: 24
+    requiredExp: 1160
+    totalExp: 14040
+  - levelId: 25
+    level: 25
+    requiredExp: 1210
+    totalExp: 15250
+  - levelId: 26
+    level: 26
+    requiredExp: 1260
+    totalExp: 16510
+  - levelId: 27
+    level: 27
+    requiredExp: 1310
+    totalExp: 17820
+  - levelId: 28
+    level: 28
+    requiredExp: 1360
+    totalExp: 19180
+  - levelId: 29
+    level: 29
+    requiredExp: 1410
+    totalExp: 20590

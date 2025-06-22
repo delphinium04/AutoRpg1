@@ -34,6 +34,9 @@ namespace Editor.DataTable
 
 
         private List<Sheet> _sheets = new List<Sheet>();
+        
+        private bool _isClassGenerated = false;
+        private bool _done = false;
 
         [MenuItem("Tools/Google Sheet Downloader")]
         public static void ShowWindow()
@@ -43,6 +46,12 @@ namespace Editor.DataTable
 
         private void OnGUI()
         {
+            if (_done)
+            {
+                GUILayout.Label("Done");
+                return;
+            }
+            
             if (GUILayout.Button("Cleanup"))
             {
                 bool confirmed = EditorUtility.DisplayDialog("Cleanup", "Do it?", "Confirm", "Cancel");
@@ -94,7 +103,7 @@ namespace Editor.DataTable
 
             if (_sheets.Count == 0) return;
 
-            // After sheetData fetched
+            // Show fetched sheets 
             GUILayout.Space(20);
             GUILayout.Label("Fetched Sheet List", EditorStyles.boldLabel);
             foreach (var sheet in _sheets)
@@ -110,6 +119,17 @@ namespace Editor.DataTable
                     string url = GetSheetUrl(_urlSpreadSheet, sheet.sheetId);
                     EditorCoroutineUtility.StartCoroutineOwnerless(Download(url,
                         csv => DatatableCsvManager.Parse(sheet.sheetName, csv)));
+                }
+
+                _isClassGenerated = true;
+            }
+                
+            // Show SO Generating Button
+            if (_isClassGenerated)
+            {
+                if (GUILayout.Button("Save Data"))
+                {
+                    DatatableCsvManager.CreateScriptableObject();
                 }
             }
         }
