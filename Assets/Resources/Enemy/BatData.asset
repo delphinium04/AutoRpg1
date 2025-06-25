@@ -12,4 +12,4 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 0bbbcc42aa921e74f9f6b06b3621eec2, type: 3}
   m_Name: BatData
   m_EditorClassIdentifier: 
-  animOverrideController: {fileID: 22100000, guid: 43f325083320a62419a11578b0bbf2f8, type: 2}
+  _animatorOverrideController: {fileID: 22100000, guid: 43f325083320a62419a11578b0bbf2f8, type: 2}

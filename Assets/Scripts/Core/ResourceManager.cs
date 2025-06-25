@@ -1,21 +1,53 @@
 ﻿using UnityEngine;
+using Object = UnityEngine.Object;
 
 namespace Core
 {
     public class ResourceManager
     {
-        public Object Instantiate(UnityEngine.Object prefab, Transform root = null, bool worldPositionStays = false,
-            Vector3 position = default, Quaternion rotation = default)
+        // need cache util
+        public T Load<T>(string path = "") where T : Object
+        {
+            if (typeof(T) != typeof(GameObject)) return Resources.Load<T>(path);
+
+            var prefabName = path;
+            if (path.LastIndexOf('/') != -1)
+            {
+                prefabName = path[(path.LastIndexOf('/') + 1)..];
+            }
+
+            var prefab = Managers.Pool.GetOriginal(prefabName);
+            if (prefab is not null)
+                return prefab as T;
+
+            return Resources.Load<T>(path);
+        }
+
+
+        public GameObject Instantiate(string path = "")
+        {
+            var original = Load<GameObject>(path);
+            if (original is null)
+            {
+                Logging.Write($"Resource not found: {path}", Logging.LogLevel.Warning);
+                return null;
+            }
+
+            return original.TryGetComponent<Poolable>(out _)
+                ? Managers.Pool.Get(original)
+                : Object.Instantiate(original);
+        }
+
+        public void Destroy(GameObject target)
         {
             // Pool
-            var instantiatedObject = UnityEngine.Object.Instantiate(prefab);
+            if (target?.GetComponent<Poolable>() != null)
+            {
+                Managers.Pool.Destroy(target);
+                return;
+            }
 
-            return instantiatedObject;
+            Object.Destroy(target);
         }
-        
-        public void Destroy(UnityEngine.Object target){
-            // Pool
-            UnityEngine.Object.Destroy(target);
-        } 
     }
 }

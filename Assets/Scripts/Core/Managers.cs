@@ -1,3 +1,4 @@
+using System;
 using UnityEngine;
 
 namespace Core
@@ -10,12 +11,10 @@ namespace Core
         {
             get
             {
+                if (_instance != null) return _instance;
+                _instance = FindFirstObjectByType<Managers>();
                 if (_instance == null)
-                {
-                    _instance = FindFirstObjectByType<Managers>();
-                    if (_instance == null)
-                        Init();
-                }
+                    Init();
 
                 return _instance;
             }
@@ -24,9 +23,22 @@ namespace Core
         #region Managers
 
         public static ResourceManager Resource { get; private set; }
+        public static PoolManager Pool { get; private set; }
 
         #endregion
-        
+
+        private void Awake()
+        {
+            if (_instance != null && _instance != this)
+            {
+                Destroy(gameObject);
+                return;
+            }
+
+            _instance = this;
+            DontDestroyOnLoad(gameObject);
+        }
+
         private static void Init()
         {
             var go = new GameObject("@Managers");
@@ -34,6 +46,13 @@ namespace Core
             _instance = go.AddComponent<Managers>();
 
             Resource = new ResourceManager();
+            Pool = new PoolManager();
+        }
+
+        private static void Clear()
+        {
+            Resource = null;
+            Pool = null;
         }
     }
 }
