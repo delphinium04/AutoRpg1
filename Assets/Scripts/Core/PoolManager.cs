@@ -13,7 +13,7 @@ namespace Core
         // DISPOSE 추가 필요
         private class Pool
         {
-            public GameObject Original { get; private set; }
+            public GameObject Original { get; }
             private Transform _root;
             private Stack<GameObject> _pool;
 
@@ -68,6 +68,8 @@ namespace Core
 
         public PoolManager()
         {
+            _poolDict = new Dictionary<string, Pool>();
+
             Transform rootGo = new GameObject("@Pool").transform;
             rootGo.SetParent(Managers.Instance.transform);
             RootTransform = rootGo;
@@ -87,37 +89,42 @@ namespace Core
                 Object.Destroy(RootTransform.gameObject);
         }
 
-        private void Create(GameObject prefab)
+        private void Create(Poolable poolable)
         {
-            string key = prefab.name;
-            var pool = new Pool(prefab);
+            string key = poolable.PrefabHash;
+            var pool = new Pool(poolable.gameObject);
             _poolDict.Add(key, pool);
         }
 
-        public GameObject Get(GameObject prefab)
+        public GameObject Get(Poolable poolable)
         {
-            if (!_poolDict.ContainsKey(prefab.name))
-                Create(prefab);
-
-            return _poolDict[prefab.name].Pop();
+            var key = poolable.PrefabHash;
+            if (!_poolDict.ContainsKey(key))
+                Create(poolable);
+            
+            var go = _poolDict[key].Pop();
+            go.SetActive(true);
+            
+            return go;
         }
 
         // return prefab if pool dictionary contains has 'name' key
-        public GameObject GetOriginal(string name)
-        {
-            return _poolDict.GetValueOrDefault(name)?.Original;
-        }
+        // public GameObject GetOriginal(string name)
+        // {
+        //     return _poolDict.GetValueOrDefault(name)?.Original;
+        // }
 
-        public void Destroy(GameObject gameObject)
+        public void Destroy(Poolable poolObject)
         {
-            if (_poolDict.TryGetValue(gameObject.name, out var pool))
+            if (_poolDict.TryGetValue(poolObject.PrefabHash, out var pool))
             {
-                pool.Push(gameObject);
+                poolObject.gameObject.SetActive(false);
+                pool.Push(poolObject.gameObject);
                 return;
             }
 
-            Logging.Write($"{gameObject.name} has no pool, Destroy");
-            Object.Destroy(gameObject);
+            Logging.Write($"{poolObject.name} has no pool, Destroy");
+            Object.Destroy(poolObject.gameObject);
         }
     }
 }

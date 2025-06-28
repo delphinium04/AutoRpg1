@@ -21,8 +21,7 @@ namespace Content.Enemy
             Init(_monsterData);
         }
         
-        /// 0: MonsterData
-        public void OnInitializeFromPool(params object[] param)
+        public void Init(MonsterData data)
         {
             if (_monsterData == null)
             {

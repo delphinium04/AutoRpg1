@@ -11,10 +11,16 @@ namespace Core
         {
             get
             {
-                if (_instance != null) return _instance;
-                _instance = FindFirstObjectByType<Managers>();
                 if (_instance == null)
-                    Init();
+                {
+                    _instance = FindFirstObjectByType<Managers>();
+
+                    if (_instance == null)
+                    {
+                        GameObject obj = new GameObject(typeof(Managers).Name);
+                        _instance = obj.AddComponent<Managers>();
+                    }
+                }
 
                 return _instance;
             }
@@ -37,22 +43,9 @@ namespace Core
 
             _instance = this;
             DontDestroyOnLoad(gameObject);
-        }
-
-        private static void Init()
-        {
-            var go = new GameObject("@Managers");
-            DontDestroyOnLoad(go);
-            _instance = go.AddComponent<Managers>();
 
             Resource = new ResourceManager();
             Pool = new PoolManager();
-        }
-
-        private static void Clear()
-        {
-            Resource = null;
-            Pool = null;
         }
     }
 }
