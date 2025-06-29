@@ -1,9 +1,9 @@
 using UnityEngine;
 
-namespace Content.Enemy
+namespace Content.Character
 {
-    [CreateAssetMenu(fileName = "MonsterData", menuName = "Data/Monster")]
-    public class MonsterData : ScriptableObject
+    [CreateAssetMenu(fileName = "CharacterData", menuName = "Data/Character")]
+    public class CharacterData : ScriptableObject
     {
         [Header("Animation Clips")] public AnimatorOverrideController AnimatorController => _animatorOverrideController;
         [SerializeField] private AnimatorOverrideController _animatorOverrideController;

@@ -1,26 +1,32 @@
 ﻿// CharacterStateMachine.cs
 
+using Content.Enemy;
+using Core;
 using UnityEngine;
 
 namespace Content.Character
 {
-    public enum CharacterStateType
+    public abstract class CharacterAnimHash
     {
-        Idle,
-        Move,
-        Attack,
-        Die
+        public static readonly int MoveBool = Animator.StringToHash("IsMove");
+        public static readonly int AttackedTrigger = Animator.StringToHash("Attacked");
+        public static readonly int AttackTrigger = Animator.StringToHash("Attack");
+        public static readonly int DieTrigger = Animator.StringToHash("Die");
     }
 
     public abstract class CharacterState
     {
         protected CharacterController Controller;
         protected CharacterStateMachine StateMachine;
+        protected CharacterInputHandler InputHandler;
+        protected Animator Animator;
 
-        protected CharacterState(CharacterController controller, CharacterStateMachine stateMachine)
+        protected CharacterState(CharacterController controller)
         {
             Controller = controller;
-            StateMachine = stateMachine;
+            StateMachine = Controller.StateMachine;
+            InputHandler = Controller.InputHandler;
+            Animator = Controller.Animator;
         }
 
         public virtual void Enter()
@@ -32,10 +38,6 @@ namespace Content.Character
         }
 
         public virtual void Update()
-        {
-        }
-
-        public virtual void FixedUpdate()
         {
         }
     }
@@ -58,131 +60,141 @@ namespace Content.Character
         }
     }
 
-    public class IdleState : CharacterState
+    public class CharacterIdleState : CharacterState
     {
         /*
          * 플레이어가 이동 조작 시 -> MoveState
-         * 자동 이동 기능 On + 적 발견 -> MoveState
-         * 적을 넘기는 방법에 대해선 고민 (수동이동때문에)
+         * 자동 기능 + 적 발견 -> Move
          */
-        
-        
-        private float _searchInterval = 0.5f;
-        private float _nextSearchTime;
 
-        public IdleState(CharacterController controller, CharacterStateMachine stateMachine)
-            : base(controller, stateMachine)
+        private const float CheckInterval = 0.5f;
+        private float _checkTimer = 0;
+
+        public CharacterIdleState(CharacterController controller)
+            : base(controller)
         {
+        }
+
+        public override void Update()
+        {
+            _checkTimer += Time.deltaTime;
+
+            if (Controller.IsAutoMode && _checkTimer > CheckInterval)
+            {
+                _checkTimer = 0;
+                GameObject enemy = GameObject.FindGameObjectWithTag("Enemy");
+                if (enemy)
+                    StateMachine.ChangeState(new CharacterMoveState(Controller, enemy));
+            }
+
+            if (Controller.InputHandler.MoveInput.magnitude > 0.1f)
+            {
+                StateMachine.ChangeState(new CharacterMoveState(Controller));
+            }
+        }
+    }
+
+    public class CharacterMoveState : CharacterState
+    {
+        /*
+         * (수동) 이동을 멈출 경우 -> Idle
+         * (자동) 적이 공격 거리 내 들어온 경우 -> Attack
+         */
+
+        private Vector2 _moveInput;
+        private Transform _characterTransform;
+
+        private EnemyController _enemy;
+        private Transform _enemyTransform;
+
+        public CharacterMoveState(CharacterController controller, GameObject target = null)
+            : base(controller)
+        {
+            _moveInput = Vector3.zero;
+            _characterTransform = controller.transform;
+
+            if (target && target.TryGetComponent<EnemyController>(out var component))
+            {
+                _enemy = component;
+                _enemyTransform = target.transform;
+            }
         }
 
         public override void Enter()
         {
-            _nextSearchTime = 0f;
+            Animator.SetBool(CharacterAnimHash.MoveBool, true);
         }
 
-        // TODO: searching enemy
         public override void Update()
         {
-            if (Controller.InputHandler.MoveInput.magnitude > 0.1f)
+            if (Controller.IsAutoMode)
             {
-                StateMachine.ChangeState(new MoveState(Controller, StateMachine));
+                AutoMove();
                 return;
             }
-        }
-        
-        // TODO: 알고리즘 사용 필요?
-        public Transform FindNearestTarget(Vector3 position, string targetTag = "Enemy")
-        {
-            var enemies = GameObject.FindGameObjectsWithTag(targetTag);
-            float closestDistance = float.MaxValue;
-            Transform closestTarget = null;
-        
-            foreach (var enemy in enemies)
+
+            // 수동 이동
+            _moveInput = InputHandler.MoveInput;
+            if (_moveInput.sqrMagnitude < 0.1f)
             {
-                float distance = Vector3.Distance(position, enemy.transform.position);
-                if (distance < closestDistance)
-                {
-                    closestDistance = distance;
-                    closestTarget = enemy.transform;
-                }
+                StateMachine.ChangeState(new CharacterIdleState(Controller));
+                return;
             }
 
-            return closestTarget;
+            ManualMove();
         }
 
-    }
-
-    public class MoveState : CharacterState
-    {
-        /*
-         * 적이 공격 거리 내 들어온 경우 -> Attack
-         * 
-         */
-
-        private Transform controllerT;
-        
-        public MoveState(CharacterController controller, CharacterStateMachine stateMachine)
-            : base(controller, stateMachine)
+        public override void Exit()
         {
+            Animator.SetBool(CharacterAnimHash.MoveBool, false);
         }
-        
-        public override void Update()
+
+        private void AutoMove()
         {
-            // 수동 이동 전제
-            var moveInput = Controller.InputHandler.MoveInput;
+            _characterTransform.LookAt(_enemyTransform);
+            _characterTransform.Translate(Vector3.forward * (Controller.MoveSpeed * Time.deltaTime));
+
+            if (Vector3.Distance(_characterTransform.position, _enemyTransform.position) < 5f)
+            {
+                StateMachine.ChangeState(new AttackState(Controller, _enemy.gameObject));
+            }
+        }
+
+        private void ManualMove()
+        {
+            _moveInput.Normalize();
+            float yDegree = Mathf.Atan2(_moveInput.x, _moveInput.y);
+            var rotation = Quaternion.Euler(0, yDegree * Mathf.Rad2Deg, 0);
+            var moveVector = new Vector3(_moveInput.x, 0, _moveInput.y) * (Controller.MoveSpeed * Time.deltaTime);
+            _characterTransform.SetPositionAndRotation(_characterTransform.position + moveVector, rotation);
         }
     }
 
     public class AttackState : CharacterState
     {
-        private readonly float _attackRange = 2f;
-        private readonly float _attackDelay = 1f;
-        private float _nextAttackTime;
+        // 공격 후 다시 Idle로
 
-        public AttackState(CharacterController controller, CharacterStateMachine stateMachine, Transform target)
-            : base(controller, stateMachine)
+        private float _debugTimer = 0f;
+
+        public AttackState(CharacterController controller, GameObject target)
+            : base(controller)
         {
         }
 
         public override void Enter()
         {
-            _nextAttackTime = 0f;
+            Animator.SetTrigger(CharacterAnimHash.AttackTrigger);
+            Logging.Write("Attack!");
         }
+
 
         public override void Update()
         {
-            // float distanceToTarget = Vector3.Distance(Controller.transform.position, Target.position);
-            //
-            // if (distanceToTarget > _attackRange)
-            // {
-            //     StateMachine.ChangeState(new MoveState(Controller, StateMachine, Target));
-            //     return;
-            // }
-            //
-            // if (Time.time >= _nextAttackTime)
-            // {
-            //     Controller.Animator.SetTrigger(AttackTriggerHash);
-            //     _nextAttackTime = Time.time + _attackDelay;
-            //
-            //     // 데미지 처리
-            //     if (Target.TryGetComponent<IDamageable>(out var damageable))
-            //     {
-            //         damageable.TakeDamage(Controller.AttackDamage);
-            //     }
-            // }
-        }
-    }
-
-    public class DeathState : CharacterState
-    {
-        public DeathState(CharacterController controller, CharacterStateMachine stateMachine)
-            : base(controller, stateMachine)
-        {
-        }
-
-        public override void Enter()
-        {
-            // Controller.Animator.SetTrigger(DeathTriggerHash);
+            _debugTimer += Time.deltaTime;
+            if (_debugTimer > 3)
+            {
+                StateMachine.ChangeState(new CharacterIdleState(Controller));
+            }
         }
     }
 }

@@ -6,7 +6,7 @@ AnimatorOverrideController:
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_Name: EnemyBatAnimController
+  m_Name: BatAnimController
   m_Controller: {fileID: 9100000, guid: cc1971938a2923746b2131f2fc97dfb5, type: 2}
   m_Clips:
   - m_OriginalClip: {fileID: 7400000, guid: 2e0f053e4aa049e4864139ee96f5e959, type: 3}

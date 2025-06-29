@@ -2049,7 +2049,6 @@ GameObject:
   - component: {fileID: 1368257012094422753}
   - component: {fileID: 5772515763028300039}
   - component: {fileID: 6996005526344020848}
-  - component: {fileID: 2277786969087070070}
   m_Layer: 0
   m_Name: PlayerTest
   m_TagString: Player
@@ -2130,8 +2129,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 3060a613681e2da4f83d448928df5a9a, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  _moveSpeed: 3
-  _input: {x: 0, y: 0, z: 0}
+  MoveSpeed: 3
+  CharacterData: {fileID: 11400000, guid: f01ee022d3473f941a5ab837e9acefd3, type: 2}
 --- !u!114 &5772515763028300039
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -2174,18 +2173,6 @@ MonoBehaviour:
   m_DefaultActionMap: Player
   m_SplitScreenIndex: -1
   m_Camera: {fileID: 0}
---- !u!114 &2277786969087070070
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 3570116589803120132}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: fc57786a9c914c19bdbced25f3cc50c1, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
 --- !u!1 &3570834471404449588
 GameObject:
   m_ObjectHideFlags: 0
