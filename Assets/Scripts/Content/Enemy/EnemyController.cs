@@ -1,37 +1,42 @@
 using System;
+using Content.Enemy.StateMachine;
 using Core;
 using UnityEngine;
-using UnityEngine.Serialization;
 
 namespace Content.Enemy
 {
     [RequireComponent(typeof(Animator))]
     public class EnemyController : MonoBehaviour
     {
-        [FormerlySerializedAs("_monsterData")] [Header("Debug")] [SerializeField] private EnemyData enemyData;
+        [Header("Debug")] [SerializeField] private EnemyData _enemyData;
+
+        public EnemyStateMachine StateMachine { get; private set; }
 
         private Animator _animator;
 
         private void Awake()
         {
             _animator = GetComponent<Animator>();
+            StateMachine = new EnemyStateMachine();
         }
 
         private void Start()
         {
-            Init(enemyData);
+            Init(_enemyData);
         }
-        
+
         public void Init(EnemyData data)
         {
-            if (enemyData == null)
+            if (_enemyData == null)
             {
                 Managers.Resource.Destroy(gameObject);
-                throw new ArgumentNullException(nameof(enemyData));
+                throw new ArgumentNullException(nameof(_enemyData));
             }
 
-            enemyData = data;
-            _animator.runtimeAnimatorController = enemyData.AnimatorController;
+            _enemyData = data;
+            _animator.runtimeAnimatorController = _enemyData.AnimatorController;
+
+            StateMachine.Initialize(new IdleState(this));
         }
     }
 }

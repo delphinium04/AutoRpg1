@@ -1,68 +1,89 @@
 ﻿using System;
 using UnityEngine;
 using System.Collections.Generic;
-using System.Linq;
 using Object = UnityEngine.Object;
 
 namespace Core
 {
-    public class PoolManager
+    public class Pool : IDisposable
     {
-        private Transform RootTransform { get; set; }
+        private bool _isDisposed = false;
 
-        // DISPOSE 추가 필요
-        private class Pool
+        public GameObject Original { get; }
+
+        private Transform _root;
+        private Stack<GameObject> _pool;
+        private const int GrowthSize = 5;
+
+        public Pool(GameObject prefab)
         {
-            public GameObject Original { get; }
-            private Transform _root;
-            private Stack<GameObject> _pool;
+            Original = prefab;
+            _root = new GameObject($"Root_{prefab.name}").transform;
+            _root.SetParent(Managers.Pool.Root);
+            _pool = new Stack<GameObject>();
 
-            private const int PoolIncreasement = 10;
+            Create();
+        }
 
-            public Pool(GameObject prefab)
+        ~Pool()
+        {
+            ReleaseUnmanagedResources();
+        }
+
+        // TODO: Coroutine을 활용해서 부하 적게 다시 구현
+        private void Create()
+        {
+            for (int i = 0; i < GrowthSize; i++)
             {
-                Original = prefab;
-                _root = new GameObject($"Root_{prefab.name}").transform;
-                _root.SetParent(Managers.Pool.RootTransform);
-                _pool = new Stack<GameObject>();
+                var go = Object.Instantiate(Original, _root);
+                go.SetActive(false);
+                _pool.Push(go);
+            }
+        }
 
+        // TODO: pop 직후 SetActive 더 안전하게?   
+        public GameObject Pop()
+        {
+            if (_pool.Count == 0)
+            {
                 Create();
             }
 
-            ~Pool()
-            {
-                foreach (var gameObject in _pool)
-                {
-                    Object.Destroy(gameObject);
-                }
-
-                Object.Destroy(_root.gameObject);
-                _pool.Clear();
-            }
-
-            private void Create()
-            {
-                for (int i = 0; i < PoolIncreasement; i++)
-                {
-                    var go = Object.Instantiate(Original, _root);
-                    go.SetActive(false);
-                    _pool.Push(go);
-                }
-            }
-
-            public GameObject Pop()
-            {
-                if (_pool.Count == 0)
-                    Create();
-
-                return _pool.Pop();
-            }
-
-            public void Push(GameObject obj)
-            {
-                _pool.Push(obj);
-            }
+            var obj = _pool.Pop();
+            obj.SetActive(true);
+            return obj;
         }
+
+        public void Push(GameObject obj)
+        {
+            obj.SetActive(false);
+            _pool.Push(obj);
+        }
+
+        private void ReleaseUnmanagedResources()
+        {
+            if (_isDisposed) return;
+            _isDisposed = true;
+            Object.Destroy(Original);
+            Object.Destroy(_root.gameObject);
+            foreach (var gameObject in _pool)
+            {
+                Object.Destroy(gameObject);
+            }
+
+            _pool.Clear();
+        }
+
+        public void Dispose()
+        {
+            ReleaseUnmanagedResources();
+            GC.SuppressFinalize(this);
+        }
+    }
+
+    public class PoolManager
+    {
+        public Transform Root { get; }
 
         private Dictionary<string, Pool> _poolDict;
 
@@ -70,61 +91,56 @@ namespace Core
         {
             _poolDict = new Dictionary<string, Pool>();
 
-            Transform rootGo = new GameObject("@Pool").transform;
-            rootGo.SetParent(Managers.Instance.transform);
-            RootTransform = rootGo;
+            Transform poolRoot = Managers.Instance.transform.Find("@Pool");
+            if (!poolRoot)
+                poolRoot = new GameObject("@Pool").transform;
+            poolRoot.SetParent(Managers.Instance.transform);
+            Root = poolRoot;
         }
 
-        ~PoolManager()
+        public void Clear()
         {
-            var pools = _poolDict.Values.ToList();
-            for (int i = 0; i < pools.Count; i++)
+            foreach (var pool in _poolDict.Values)
             {
-                pools[i] = null;
+                pool.Dispose();
             }
 
             _poolDict.Clear();
-
-            if (RootTransform)
-                Object.Destroy(RootTransform.gameObject);
-        }
-
-        private void Create(Poolable poolable)
-        {
-            string key = poolable.PrefabHash;
-            var pool = new Pool(poolable.gameObject);
-            _poolDict.Add(key, pool);
         }
 
         public GameObject Get(Poolable poolable)
         {
-            var key = poolable.PrefabHash;
+            if (!poolable) return null;
+
+            var key = poolable.ID;
             if (!_poolDict.ContainsKey(key))
-                Create(poolable);
-            
+                CreatePair(poolable);
+
             var go = _poolDict[key].Pop();
             go.SetActive(true);
-            
             return go;
         }
 
-        // return prefab if pool dictionary contains has 'name' key
-        // public GameObject GetOriginal(string name)
-        // {
-        //     return _poolDict.GetValueOrDefault(name)?.Original;
-        // }
-
-        public void Destroy(Poolable poolObject)
+        public void Destroy(Poolable poolable)
         {
-            if (_poolDict.TryGetValue(poolObject.PrefabHash, out var pool))
+            if (!poolable) return;
+
+            if (_poolDict.TryGetValue(poolable.ID, out var pool))
             {
-                poolObject.gameObject.SetActive(false);
-                pool.Push(poolObject.gameObject);
+                poolable.gameObject.SetActive(false);
+                pool.Push(poolable.gameObject);
                 return;
             }
 
-            Logging.Write($"{poolObject.name} has no pool, Destroy");
-            Object.Destroy(poolObject.gameObject);
+            Logging.Write($"No pool of {poolable.name} in dict, just destroy");
+            Object.Destroy(poolable.gameObject);
+        }
+
+        private void CreatePair(Poolable poolable)
+        {
+            var key = poolable.ID;
+            var pool = new Pool(poolable.gameObject);
+            _poolDict.Add(key, pool);
         }
     }
 }

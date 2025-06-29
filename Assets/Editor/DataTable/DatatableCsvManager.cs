@@ -11,45 +11,45 @@ namespace Editor.Datatable
 {
     public static class DatatableCsvManager
     {
-        private const string CACHE_PREF_KEY = "DatatableCsvManager_Cache";
+        private const string CachePrefKey = "DatatableCsvManager_Cache";
         private static Queue<ParsedCsv> _parsedCsvCache = new Queue<ParsedCsv>();
 
         [Serializable]
         private class ParsedCsvCache
         {
-            public List<ParsedCsv> items = new List<ParsedCsv>();
+            public List<ParsedCsv> _items = new List<ParsedCsv>();
         }
 
         [Serializable]
         private class ParsedCsv
         {
             // 기존 필드들을 그대로 유지하되, Serializable 속성 추가
-            public string SheetName;
-            public string[] CommentNames;
-            public string[] VarNames;
-            public string[] VarTypes;
-            public string[] Data;
-            public string DataClassName;
-            public string TableClassName;
+            public string _sheetName;
+            public string[] _commentNames;
+            public string[] _varNames;
+            public string[] _varTypes;
+            public string[] _data;
+            public string _dataClassName;
+            public string _tableClassName;
         }
 
         private static void SaveCache()
         {
             var cache = new ParsedCsvCache
             {
-                items = _parsedCsvCache.ToList()
+                _items = _parsedCsvCache.ToList()
             };
             string json = JsonUtility.ToJson(cache);
-            EditorPrefs.SetString(CACHE_PREF_KEY, json);
+            EditorPrefs.SetString(CachePrefKey, json);
         }
 
         private static void LoadCache()
         {
-            string json = EditorPrefs.GetString(CACHE_PREF_KEY, "");
+            string json = EditorPrefs.GetString(CachePrefKey, "");
             if (!string.IsNullOrEmpty(json))
             {
                 var cache = JsonUtility.FromJson<ParsedCsvCache>(json);
-                _parsedCsvCache = new Queue<ParsedCsv>(cache.items);
+                _parsedCsvCache = new Queue<ParsedCsv>(cache._items);
             }
         }
 
@@ -60,7 +60,7 @@ namespace Editor.Datatable
         public static void DeleteAllGeneratedFiles()
         {
             _parsedCsvCache.Clear();
-            EditorPrefs.DeleteKey(CACHE_PREF_KEY); // 캐시 삭제
+            EditorPrefs.DeleteKey(CachePrefKey); // 캐시 삭제
             Delete(BaseScriptPath);
             Delete(BaseScriptableObjectPath);
             return;
@@ -93,11 +93,8 @@ namespace Editor.Datatable
             string[] lines = csv.Split(new[] { "\r\n", "\n" }, StringSplitOptions.None);
 
             // 실제 데이터 영역 확인
-            int validRowCount = 0;
-            int validColumnCount = 0;
-
             string[] columns = lines[0].Split(',');
-            validColumnCount = columns.Length;
+            var validColumnCount = columns.Length;
             for (int i = 0; i < columns.Length; i++)
             {
                 if (!string.IsNullOrEmpty(columns[i]) && !string.IsNullOrWhiteSpace(columns[i])) continue;
@@ -105,7 +102,7 @@ namespace Editor.Datatable
                 break;
             }
 
-            validRowCount = lines.Length;
+            var validRowCount = lines.Length;
             for (int i = 0; i < lines.Length; i++)
             {
                 string[] values = lines[i].Split(',');
@@ -129,13 +126,13 @@ namespace Editor.Datatable
 
             ParsedCsv parsedCsv = new ParsedCsv
             {
-                SheetName = sheetName,
-                CommentNames = FilterColumns(lines[0], ignoreColumns).Split(','),
-                VarNames = FilterColumns(lines[1], ignoreColumns).Split(','),
-                VarTypes = FilterColumns(lines[2], ignoreColumns).Split(','),
-                Data = FilterColumnsMultiline(csv, ignoreColumns)[3..],
-                DataClassName = $"{DatatableNamespace}.{sheetName}Data",
-                TableClassName = $"{DatatableNamespace}.{sheetName}Table"
+                _sheetName = sheetName,
+                _commentNames = FilterColumns(lines[0], ignoreColumns).Split(','),
+                _varNames = FilterColumns(lines[1], ignoreColumns).Split(','),
+                _varTypes = FilterColumns(lines[2], ignoreColumns).Split(','),
+                _data = FilterColumnsMultiline(csv, ignoreColumns)[3..],
+                _dataClassName = $"{DatatableNamespace}.{sheetName}Data",
+                _tableClassName = $"{DatatableNamespace}.{sheetName}Table"
             };
             _parsedCsvCache.Enqueue(parsedCsv);
             SaveCache(); // 캐시 저장
@@ -152,7 +149,7 @@ namespace Editor.Datatable
         public static void CreateScriptableObject()
         {
             LoadCache(); // 캐시 복원
-        
+
             if (_parsedCsvCache.Count == 0)
             {
                 Debug.LogWarning("No data to generate");
@@ -166,7 +163,7 @@ namespace Editor.Datatable
             }
 
             Debug.Log("All data converted to ScriptableObject");
-            EditorPrefs.DeleteKey(CACHE_PREF_KEY); // 작업 완료 후 캐시 삭제
+            EditorPrefs.DeleteKey(CachePrefKey); // 작업 완료 후 캐시 삭제
             _parsedCsvCache.Clear();
         }
 
@@ -175,13 +172,13 @@ namespace Editor.Datatable
             try
             {
                 // ScriptableObject 생성
-                var dataType = GetTypeFromName(parsed.DataClassName);
-                var tableType = GetTypeFromName(parsed.TableClassName);
+                var dataType = GetTypeFromName(parsed._dataClassName);
+                var tableType = GetTypeFromName(parsed._tableClassName);
 
                 if (tableType == null || dataType == null)
                 {
                     Debug.LogError(
-                        $"Types not found for {parsed.DataClassName}. Make sure to compile the generated scripts first.");
+                        $"Types not found for {parsed._dataClassName}. Make sure to compile the generated scripts first.");
                     return;
                 }
 
@@ -192,7 +189,7 @@ namespace Editor.Datatable
 
                 // 이미 파일이 있는지 확인
                 bool isAlreadyAssetExist = false;
-                var dataPath = Path.Combine(BaseScriptableObjectPath, $"{parsed.TableClassName}.asset");
+                var dataPath = Path.Combine(BaseScriptableObjectPath, $"{parsed._tableClassName}.asset");
                 if (File.Exists(dataPath))
                 {
                     isAlreadyAssetExist = true;
@@ -205,7 +202,7 @@ namespace Editor.Datatable
                 }
 
                 // 데이터 행 처리
-                foreach (var dataLine in parsed.Data)
+                foreach (var dataLine in parsed._data)
                 {
                     string[] data = dataLine.Split(',');
                     var dataInstance = CreateDataInstance(dataType, parsed, data);
@@ -220,12 +217,12 @@ namespace Editor.Datatable
                 listField.SetValue(table, list);
 
                 // 파일로 저장
-                SaveScriptableObject(table, parsed.SheetName, isAlreadyAssetExist);
+                SaveScriptableObject(table, parsed._sheetName, isAlreadyAssetExist);
             }
             catch (Exception e)
             {
                 Debug.LogError(
-                    $"Error creating ScriptableObject for {parsed.SheetName}: {e.Message}\n{e.StackTrace}");
+                    $"Error creating ScriptableObject for {parsed._sheetName}: {e.Message}\n{e.StackTrace}");
             }
         }
 
@@ -267,20 +264,20 @@ namespace Editor.Datatable
         {
             var instance = Activator.CreateInstance(dataType);
 
-            for (int i = 0; i < csv.VarNames.Length; i++)
+            for (int i = 0; i < csv._varNames.Length; i++)
             {
                 try
                 {
-                    var field = dataType.GetField(csv.VarNames[i]);
+                    var field = dataType.GetField(csv._varNames[i]);
                     if (field != null)
                     {
-                        object convertedValue = ConvertValue(values[i], csv.VarTypes[i]);
+                        object convertedValue = ConvertValue(values[i], csv._varTypes[i]);
                         field.SetValue(instance, convertedValue);
                     }
                 }
                 catch (Exception e)
                 {
-                    Debug.LogError($"Error setting field {csv.VarNames[i]}: {e.Message}");
+                    Debug.LogError($"Error setting field {csv._varNames[i]}: {e.Message}");
                 }
             }
 
@@ -290,30 +287,30 @@ namespace Editor.Datatable
         private static void GenerateDataClass(ParsedCsv parsedCsv)
         {
             // add variable lines
-            string variables = "";
-            for (int i = 0; i < parsedCsv.CommentNames.Length; i++)
+            StringBuilder variables = new StringBuilder();
+            for (int i = 0; i < parsedCsv._commentNames.Length; i++)
             {
-                variables +=
-                    $"\t\tpublic {parsedCsv.VarTypes[i]} {parsedCsv.VarNames[i]}; // {parsedCsv.CommentNames[i]}\n";
+                variables.Append(
+                    $"\t\tpublic {parsedCsv._varTypes[i]} {parsedCsv._varNames[i]}; // {parsedCsv._commentNames[i]}\n");
             }
 
-            string script = string.Format(DatatableClassFormat.Data, DatatableNamespace, parsedCsv.SheetName,
+            StringBuilder script = new StringBuilder();
+            script.AppendFormat(DatatableClassFormat.Data, DatatableNamespace, parsedCsv._sheetName,
                 variables);
-            File.WriteAllText(BaseScriptPath + $"{parsedCsv.SheetName}Data.cs", script, Encoding.UTF8);
+            File.WriteAllText(BaseScriptPath + $"{parsedCsv._sheetName}Data.cs", script.ToString(), Encoding.UTF8);
         }
 
         private static void GenerateTableClass(ParsedCsv parsedCsv)
         {
-            string script = string.Format(DatatableClassFormat.Table, DatatableNamespace, parsedCsv.SheetName);
-            File.WriteAllText(BaseScriptPath + $"{parsedCsv.SheetName}Table.cs", script, Encoding.UTF8);
+            string script = string.Format(DatatableClassFormat.Table, DatatableNamespace, parsedCsv._sheetName);
+            File.WriteAllText(BaseScriptPath + $"{parsedCsv._sheetName}Table.cs", script, Encoding.UTF8);
         }
 
         private static void GenerateProviderClass(ParsedCsv csv)
         {
-            string idVariableName = csv.VarNames[0];
-            string script = string.Format(DatatableClassFormat.Provider, DatatableNamespace, csv.SheetName,
-                csv.VarNames[0]);
-            File.WriteAllText(BaseScriptPath + $"{csv.SheetName}DataProvider.cs", script, Encoding.UTF8);
+            string script = string.Format(DatatableClassFormat.Provider, DatatableNamespace, csv._sheetName,
+                csv._varNames[0]);
+            File.WriteAllText(BaseScriptPath + $"{csv._sheetName}DataProvider.cs", script, Encoding.UTF8);
         }
 
         private static object ConvertValue(string value, string type)
@@ -334,8 +331,6 @@ namespace Editor.Datatable
                 case "string":
                     return value;
                 default:
-                    if (Type.GetType($"System.{type}") is { } enumType && enumType.IsEnum)
-                        return Enum.Parse(enumType, value);
                     throw new ArgumentException($"Unsupported type: {type}");
             }
         }

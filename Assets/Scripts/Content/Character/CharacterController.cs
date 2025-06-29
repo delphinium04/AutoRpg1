@@ -1,4 +1,5 @@
 using System;
+using Content.Character.StateMachine;
 using UnityEngine;
 
 namespace Content.Character
@@ -7,11 +8,11 @@ namespace Content.Character
     public class CharacterController : MonoBehaviour
     {
         // 추후 데이터화
-        public float MoveSpeed = 3f;
-        public CharacterData CharacterData;
+        public float _moveSpeed = 3f;
+        public CharacterData _characterData;
         
         // SETTING
-        public bool IsAutoMode = false;
+        public bool _isAutoMode = true;
 
         public CharacterInputHandler InputHandler { get; private set; }
         public CharacterStateMachine StateMachine { get; private set; }
@@ -23,15 +24,15 @@ namespace Content.Character
             Animator = GetComponent<Animator>();
             StateMachine = new CharacterStateMachine();
 
-            Init(CharacterData);
+            Init(_characterData);
         }
 
         public void Init(CharacterData data)
         {
-            CharacterData = data;
-            Animator.runtimeAnimatorController = CharacterData.AnimatorController;
+            _characterData = data;
+            Animator.runtimeAnimatorController = _characterData.AnimatorController;
             
-            StateMachine.Initialize(new CharacterIdleState(this));
+            StateMachine.Initialize(new IdleState(this));
         }
 
         private void Start()
@@ -42,6 +43,9 @@ namespace Content.Character
         private void Update()
         {
             StateMachine?.CurrentState?.Update();
+
+            if (InputHandler.MoveInput.magnitude > 0.1f)
+                _isAutoMode = false;
         }
     }
 }
