@@ -11,8 +11,10 @@ namespace Content.Enemy
         [Header("Debug")] [SerializeField] private EnemyData _enemyData;
 
         public EnemyStateMachine StateMachine { get; private set; }
+        public float PlayerDetectionReach { get; private set; } = 7f;
 
         private Animator _animator;
+
 
         private void Awake()
         {
