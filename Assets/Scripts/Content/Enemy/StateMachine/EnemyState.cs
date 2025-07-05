@@ -12,6 +12,8 @@ namespace Content.Enemy.StateMachine
         protected EnemyState(EnemyController controller)
         {
             Controller = controller;
+            StateMachine = Controller.StateMachine;
+            Animator = Controller.Animator;
         }
 
         public virtual void Enter()

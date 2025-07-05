@@ -10,7 +10,7 @@ namespace Core
         }
 
         // ReSharper disable Unity.PerformanceAnalysis
-        public static void Write(string msg, LogLevel level = LogLevel.Default)
+        public static void Write(object msg, LogLevel level = LogLevel.Default)
         {
             #if UNITY_EDITOR
             switch (level)

@@ -1,8 +1,8 @@
 ﻿using UnityEngine;
 
-namespace Content.Enemy.Common
+namespace Content.Character
 {
-    public abstract class EnemyAnimHash
+    public abstract class CharacterAnimHash
     {
         public static readonly int MoveBool = Animator.StringToHash("IsMove");
         public static readonly int AttackedTrigger = Animator.StringToHash("Attacked");

@@ -1,5 +1,4 @@
-﻿
-using Content.Character.Common;
+﻿using Content.Character;
 using UnityEngine;
 
 namespace Content.Enemy.StateMachine
@@ -22,7 +21,6 @@ namespace Content.Enemy.StateMachine
         {
             Animator.SetTrigger(CharacterAnimHash.AttackTrigger);
         }
-
 
         public override void Update()
         {

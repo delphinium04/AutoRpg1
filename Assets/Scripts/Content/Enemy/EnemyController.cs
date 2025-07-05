@@ -11,14 +11,14 @@ namespace Content.Enemy
         [Header("Debug")] [SerializeField] private EnemyData _enemyData;
 
         public EnemyStateMachine StateMachine { get; private set; }
+        public Animator Animator { get; private set; }
+
         public float PlayerDetectionReach { get; private set; } = 7f;
-
-        private Animator _animator;
-
+        public float AttackReach { get; private set; } = 2f;
 
         private void Awake()
         {
-            _animator = GetComponent<Animator>();
+            Animator = GetComponent<Animator>();
             StateMachine = new EnemyStateMachine();
         }
 
@@ -36,9 +36,14 @@ namespace Content.Enemy
             }
 
             _enemyData = data;
-            _animator.runtimeAnimatorController = _enemyData.AnimatorController;
+            Animator.runtimeAnimatorController = _enemyData.AnimatorController;
 
             StateMachine.Initialize(new IdleState(this));
+        }
+
+        private void Update()
+        {
+            StateMachine?.CurrentState?.Update();
         }
     }
 }

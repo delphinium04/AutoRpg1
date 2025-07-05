@@ -1,5 +1,4 @@
-﻿using Content.Character.Common;
-using Content.Enemy;
+﻿using Content.Enemy;
 using UnityEngine;
 
 namespace Content.Character.StateMachine

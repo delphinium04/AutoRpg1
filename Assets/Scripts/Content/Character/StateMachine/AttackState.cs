@@ -1,6 +1,5 @@
 ﻿// CharacterStateMachine.cs
 
-using Content.Character.Common;
 using Core;
 using UnityEngine;
 
