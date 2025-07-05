@@ -3,26 +3,27 @@ using UnityEngine;
 
 namespace Content.Enemy.StateMachine
 {
-    public class IdleState : EnemyState
+    public class EnemyIdleState : EnemyState
     {
-        private Collider[] _result;
+        private Collider[] _result = new Collider[1];
 
         private float _timer;
+        private float _searchInterval = 1f;
 
-        public IdleState(EnemyController controller)
+        public EnemyIdleState(EnemyController controller)
             : base(controller)
         {
         }
 
         public override void Enter()
         {
-            _result = new Collider[1];
+            Controller.Animator.SetBool(EnemyAnimHash.MoveBool, false);;
         }
 
         public override void Update()
         {
             _timer += Time.deltaTime;
-            if (_timer > 1)
+            if (_timer > _searchInterval)
             {
                 CheckNearbyPlayer();
                 _timer = 0;
@@ -31,11 +32,14 @@ namespace Content.Enemy.StateMachine
 
         public void CheckNearbyPlayer()
         {
-            Logging.Write("Pulse");
             if (Physics.OverlapSphereNonAlloc(Controller.transform.position, Controller.PlayerDetectionReach, _result,
                     LayerMask.GetMask("Player")) <= 0) return;
-            StateMachine.ChangeState(new MoveState(Controller, _result[0].gameObject));
-            Logging.Write(_result[0].gameObject.name);
+            
+            if (_result[0]?.TryGetComponent<Content.Character.CharacterController>(out var character) ?? false)
+            {
+                Controller.TargetCharacter = character;
+                StateMachine.ChangeState(new EnemyCombatState(Controller));
+            }
         }
     }
 }

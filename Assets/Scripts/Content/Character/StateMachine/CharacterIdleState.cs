@@ -7,6 +7,7 @@ namespace Content.Character.StateMachine
     {
         private float _timer;
         private const float DetectInterval = 1f;
+        private Collider[] results = new Collider[5];
 
         public CharacterIdleState(CharacterController controller)
             : base(controller)
@@ -20,24 +21,25 @@ namespace Content.Character.StateMachine
             {
                 _timer = 0;
                 Transform t = FindNearestEnemy();
-                if (t.TryGetComponent<EnemyController>(out var component))
-                {
-                    StateMachine.ChangeState(new CharacterCombatState(Controller, component));
-                }
+                if (t?.TryGetComponent<EnemyController>(out var component) != true) return;
+
+                Controller.TargetEnemy = component;
+                StateMachine.ChangeState(new CharacterCombatState(Controller));
             }
         }
 
         public Transform FindNearestEnemy()
         {
-            Collider[] results = new Collider[] { };
-            var size = Physics.OverlapSphereNonAlloc(Controller.transform.position, Controller.detectionRadius, results,
-                Controller.enemyLayer);
+            var size = Physics.OverlapSphereNonAlloc(Controller.transform.position, Controller.DetectionRadius, results,
+                Controller.EnemyLayer);
             Transform nearest = null;
             float nearestDistance = float.MaxValue;
 
-            foreach (var hit in results)
+            for (int i = 0; i < size; i++)
             {
-                if (!hit.TryGetComponent<EnemyController>(out var component)) continue;
+                var hit = results[i];
+                if (!hit.TryGetComponent<EnemyController>(out var component))
+                    continue;
 
                 float distance = Vector3.Distance(Controller.transform.position, hit.transform.position);
                 if (distance < nearestDistance && !component.IsDead)
