@@ -1,4 +1,3 @@
-using Datatable;
 using UnityEngine;
 
 namespace Content.Character
@@ -14,19 +13,18 @@ namespace Content.Character
         public float AttackReach { get; private set; }
         public float AttackSpeed { get; private set; }
 
-        public CharacterData(CharacterInit init)
+        public CharacterData()
         {
-            var spec = init.Data;
-            Level = init.Level;
+            Level = 4;
 
-            Id = spec.Id;
-            Name = spec.Name;
-            AttackReach = spec.AttackReach;
-            AttackSpeed = spec.AttackSpeed;
+            Id = 1;
+            Name = "hi";
+            AttackReach = 0.5f;
+            AttackSpeed = 1;
 
-            MaxHp = spec.HpDefault * (int)Mathf.Pow(spec.HpGrowth, Level);
+            MaxHp = 250;
             Hp = MaxHp;
-            Attack = spec.AttackDefault * (int)Mathf.Pow(spec.AttackGrowth, Level);
+            Attack = 30;
         }
     }
 }

@@ -1,5 +1,4 @@
 using Content.Character.StateMachine;
-using Datatable;
 using UnityEngine;
 
 namespace Content.Character
@@ -24,17 +23,12 @@ namespace Content.Character
 
             // DEBUG
             Animator.runtimeAnimatorController = animatorOverrideController;
-            CharacterInit init = new CharacterInit
-            {
-                Data = CharacterSpecDataProvider.Get(4),
-                Level = 4
-            };
-            Init(init);
+            Init();
         }
 
-        public void Init(CharacterInit init)
+        public void Init()
         {
-            Data = new CharacterData(init);
+            Data = new CharacterData();
         }
 
         private void Start()
