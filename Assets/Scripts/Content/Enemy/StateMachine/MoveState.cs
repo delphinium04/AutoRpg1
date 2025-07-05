@@ -50,7 +50,7 @@ namespace Content.Enemy.StateMachine
         {
             if (Vector3.Distance(_transform.position, _characterTransform.position) < Controller.AttackReach)
             {
-                StateMachine.ChangeState(new AttackState(Controller, null));
+                StateMachine.ChangeState(new AttackState(Controller, _target));
             }
 
             Vector3 direction = (_characterTransform.position - _transform.position).normalized;

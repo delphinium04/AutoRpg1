@@ -16,6 +16,9 @@ namespace Content.Enemy
         public float PlayerDetectionReach { get; private set; } = 7f;
         public float AttackReach { get; private set; } = 2f;
 
+        public bool IsDead { get; private set; }
+        public int Health { get; private set; } = 100;
+
         private void Awake()
         {
             Animator = GetComponent<Animator>();
@@ -38,12 +41,32 @@ namespace Content.Enemy
             _enemyData = data;
             Animator.runtimeAnimatorController = _enemyData.AnimatorController;
 
+            Health = 100;
+            gameObject.GetComponent<Collider>().enabled = true;
+
             StateMachine.Initialize(new IdleState(this));
         }
 
         private void Update()
         {
             StateMachine?.CurrentState?.Update();
+        }
+
+        public void TakeDamage(int damage)
+        {
+            Health -= damage;
+            if (Health <= 0)
+            {
+                IsDead = true;
+                gameObject.GetComponent<Collider>().enabled = false;
+                Animator.SetTrigger(EnemyAnimHash.DieTrigger);
+                Invoke(nameof(Die), 1f);
+            }
+        }
+
+        public void Die()
+        {
+            Managers.Resource.Destroy(gameObject);
         }
     }
 }

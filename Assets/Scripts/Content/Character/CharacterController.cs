@@ -1,38 +1,40 @@
-using System;
 using Content.Character.StateMachine;
+using Datatable;
 using UnityEngine;
 
 namespace Content.Character
 {
-    [RequireComponent(typeof(CharacterInputHandler), typeof(Animator))]
     public class CharacterController : MonoBehaviour
     {
-        // 추후 데이터화
-        public float _moveSpeed = 3f;
-        public CharacterData _characterData;
-        
-        // SETTING
-        public bool _isAutoMode = true;
-
-        public CharacterInputHandler InputHandler { get; private set; }
+        [Header("Components")] public CharacterInputHandler InputHandler { get; private set; }
         public CharacterStateMachine StateMachine { get; private set; }
+        public CharacterData Data { get; private set; }
         public Animator Animator { get; private set; }
+
+        [Header("Detection")] public float detectionRadius = 10f;
+        public LayerMask enemyLayer;
+
+        [Header("Debug")] public AnimatorOverrideController animatorOverrideController;
 
         private void Awake()
         {
-            InputHandler = GetComponent<CharacterInputHandler>();
             Animator = GetComponent<Animator>();
             StateMachine = new CharacterStateMachine();
+            InputHandler = GetComponent<CharacterInputHandler>();
 
-            Init(_characterData);
+            // DEBUG
+            Animator.runtimeAnimatorController = animatorOverrideController;
+            CharacterInit init = new CharacterInit
+            {
+                Data = CharacterSpecDataProvider.Get(4),
+                Level = 4
+            };
+            Init(init);
         }
 
-        public void Init(CharacterData data)
+        public void Init(CharacterInit init)
         {
-            _characterData = data;
-            Animator.runtimeAnimatorController = _characterData.AnimatorController;
-            
-            StateMachine.Initialize(new IdleState(this));
+            Data = new CharacterData(init);
         }
 
         private void Start()
@@ -43,9 +45,23 @@ namespace Content.Character
         private void Update()
         {
             StateMachine?.CurrentState?.Update();
+        }
 
-            if (InputHandler.MoveInput.magnitude > 0.1f)
-                _isAutoMode = false;
+
+        public void TakeDamage(int damage)
+        {
+            if (Data.Hp <= 0) return;
+
+            Data.Hp -= damage;
+            if (Data.Hp <= 0)
+            {
+                Die();
+            }
+        }
+
+        private void Die()
+        {
+            StateMachine.ChangeState(new CharacterDeadState(this));
         }
     }
 }

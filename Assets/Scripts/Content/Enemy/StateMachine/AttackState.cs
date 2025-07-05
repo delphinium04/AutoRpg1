@@ -1,5 +1,7 @@
 ﻿using Content.Character;
+using Core;
 using UnityEngine;
+using CharacterController = Content.Character.CharacterController;
 
 namespace Content.Enemy.StateMachine
 {
@@ -20,6 +22,11 @@ namespace Content.Enemy.StateMachine
         public override void Enter()
         {
             Animator.SetTrigger(CharacterAnimHash.AttackTrigger);
+            if (_target?.TryGetComponent<CharacterController>(out var damageable) == true)
+            {
+                Logging.Write("Attack!");
+                damageable.TakeDamage(30);
+            }
         }
 
         public override void Update()

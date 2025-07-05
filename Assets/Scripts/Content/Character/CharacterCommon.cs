@@ -2,6 +2,12 @@
 
 namespace Content.Character
 {
+    public struct CharacterInit
+    {
+        public Datatable.CharacterSpecData Data;
+        public int Level;
+    }
+    
     public abstract class CharacterAnimHash
     {
         public static readonly int MoveBool = Animator.StringToHash("IsMove");
