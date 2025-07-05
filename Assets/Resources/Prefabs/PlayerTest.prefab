@@ -2056,7 +2056,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!4 &5958920694744464393
 Transform:
   m_ObjectHideFlags: 0
@@ -2130,9 +2130,11 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 3060a613681e2da4f83d448928df5a9a, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  _moveSpeed: 3
-  _characterData: {fileID: 11400000, guid: f01ee022d3473f941a5ab837e9acefd3, type: 2}
-  _isAutoMode: 0
+  detectionRadius: 10
+  enemyLayer:
+    serializedVersion: 2
+    m_Bits: 128
+  animatorOverrideController: {fileID: 22100000, guid: 231d628fea95de444b0cd737466ef11d, type: 2}
 --- !u!114 &5772515763028300039
 MonoBehaviour:
   m_ObjectHideFlags: 0
