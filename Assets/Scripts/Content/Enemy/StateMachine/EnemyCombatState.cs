@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using Content.Character;
 using Core;
 using UnityEngine;
